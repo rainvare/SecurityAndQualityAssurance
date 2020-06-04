@@ -68,6 +68,7 @@ app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
 // It still has limited support.
 
 // Use `helmet.xssFilter()`
+app.use(helmet.xssFilter());
 
 
 
@@ -80,7 +81,8 @@ app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
 // This middleware sets the X-Content-Type-Options header to `nosniff`,
 // instructing the browser to not bypass the provided `Content-Type`.
 
-// Use `helmet.noSniff()`
+// Use `
+app.use(helmet.noSniff());
 
 
 
@@ -93,9 +95,8 @@ app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }));
 // This middleware sets the `X-Download-Options` header to `noopen`,
 // to prevent IE users from executing downloads in the *trusted* site's context.
 
-// Use `helmet.ieNoOpen()`
-
-
+// Use `
+app.use(helmet.ieNoOpen());
 
 /**  7) Ask browsers to access your site via HTTPS only - `helmet.hsts()` */
 
