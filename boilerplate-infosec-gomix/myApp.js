@@ -116,6 +116,8 @@ app.use(helmet.ieNoOpen());
 
 var ninetyDaysInSeconds = 90*24*60*60;
 
+app.use(helmet.hsts({maxAge:ninetyDaysInSeconds}));
+
 
 //**Note**:
 // Configuring HTTPS on a custom website requires the acquisition of a domain,
