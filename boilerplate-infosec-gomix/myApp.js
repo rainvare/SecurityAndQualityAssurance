@@ -137,7 +137,7 @@ app.use(helmet.hsts({maxAge:ninetyDaysInSeconds}));
 // Use `helmet.dnsPrefetchControl()`
 
 
-
+app.use(helmet.dnsPrefetchControl());
 /** 9) Disable Client-Side Caching - `helmet.noCache()` */
 
 // If you are releasing an update for your website, and you want your users
@@ -147,7 +147,7 @@ app.use(helmet.hsts({maxAge:ninetyDaysInSeconds}));
 // use this option only when there is a real need.
 
 // Use helmet.noCache()
-
+app.use(helmet.noCache());
 
 
 /** 10) Content Security Policy - `helmet.contentSecurityPolicy()` */
