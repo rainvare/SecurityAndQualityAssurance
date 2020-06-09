@@ -160,19 +160,20 @@ test('#isOk, #isNotOk', function() {
       assert.isString(JSON.stringify({ type: "object" }), "a JSON is a string");
     });
     
-    /** 14 - #include (on #notInclude ) works for strings too !! **/
+     /** 14 - #include (on #notInclude ) works for strings too !! **/
     // It asserts that the actual string contains the expected substring
-    test('String #include, #notInclude', function() {
-      assert.fail('Arrow', 'row', "Arrow contains row...");
-      assert.fail('dart', 'queue', "But a dart doesn't contain a queue");
+    test("String #include, #notInclude", function() {
+      assert.include("Arrow", "row", "Arrow contains row...");
+      assert.notInclude("dart", "queue", "But a dart doesn't contain a queue");
     });
+
     
     /** 15 - #match Asserts that the actual value **/
     // matches the second argument regular expression.
-    test('#match, #notMatch', function() {
-      var regex =  /^#\sname\:\s[\w\s]+,\sage\:\s\d+\s?$/;
-      assert.fail(formatPeople('John Doe', 35), regex);
-      assert.fail(formatPeople('Paul Smith III', 'twenty-four'), regex);
+    test("#match, #notMatch", function() {
+      var regex = /^#\sname\:\s[\w\s]+,\sage\:\s\d+\s?$/;
+      assert.match(formatPeople("John Doe", 35), regex);
+      assert.notMatch(formatPeople("Paul Smith III", "twenty-four"), regex);
     });
   });
   
@@ -199,10 +200,10 @@ test('#isOk, #isNotOk', function() {
     
     /** 16 - #property asserts that the actual object has a given property. **/
     // Use #property or #notProperty where appropriate
-    test('#property, #notProperty', function() {
-      assert.fail(myCar, 'wings', 'A car has not wings');
-      assert.fail(airlinePlane, 'engines', 'planes have engines');
-      assert.fail(myCar, 'wheels', 'Cars have wheels');
+    test("#property, #notProperty", function() {
+      assert.notProperty(myCar, "wings", "A car has not wings");
+      assert.property(airlinePlane, "engines", "planes have engines");
+      assert.property(myCar, "wheels", "Cars have wheels");
     });
 
     test('#typeOf, #notTypeOf', function() {
@@ -210,24 +211,23 @@ test('#isOk, #isNotOk', function() {
       /** 17 #typeOf asserts that value’s type is the given string, **/
       // as determined by Object.prototype.toString.
       // Use #typeOf or #notTypeOf where appropriate
-      assert.fail(myCar, 'object');
-      assert.fail(myCar.model, 'string');
-      assert.fail(airlinePlane.wings, 'string');
-      assert.fail(airlinePlane.engines, 'array');
-      assert.fail(myCar.wheels, 'number');
+      assert.typeOf(myCar, "object");
+      assert.typeOf(myCar.model, "string");
+      assert.notTypeOf(airlinePlane.wings, "string");
+      assert.typeOf(airlinePlane.engines, "array");
+      assert.typeOf(myCar.wheels, "number");
     });
 
     test('#instanceOf, #notInstanceOf', function() {
       
       /** 18 #instanceOf asserts that an object is an instance of a constructor **/
       // Use #instanceOf or #notInstanceOf where appropriate
-      assert.fail(myCar, Plane);
-      assert.fail(airlinePlane, Plane);
-      assert.fail(airlinePlane, Object, 'everything is an Object');
-      assert.fail(myCar.wheels, String );
+      assert.notInstanceOf(myCar, Plane);
+      assert.instanceOf(airlinePlane, Plane);
+      assert.instanceOf(airlinePlane, Object, "everything is an Object");
+      assert.notInstanceOf(myCar.wheels, String);
     });
   });
-  
 // -----------------------------------------------------------------------------
 });
 
