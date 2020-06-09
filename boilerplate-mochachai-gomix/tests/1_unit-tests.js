@@ -100,12 +100,12 @@ test('#isOk, #isNotOk', function() {
       assert.isAtMost(1 - Math.random(), 1);
     });
 
-    /** 9 - .isBelow() => a < b , .isAtLeast =>  a >= b **/
-    test('#isBelow, #isAtLeast', function() {
-      assert.fail('world'.length , 5);
-      assert.fail(2*Math.random(), 0);
-      assert.fail(5 % 2, 2);
-      assert.fail(2/3, 1);
+     /** 9 - .isBelow() => a < b , .isAtLeast =>  a >= b **/
+    test("#isBelow, #isAtLeast", function() {
+      assert.isAtLeast("world".length, 5);
+      assert.isAtLeast(2 * Math.random(), 0);
+      assert.isBelow(5 % 2, 2);
+      assert.isBelow(2 / 3, 1);
     });
 
     /** 10 - .approximately **/
@@ -114,8 +114,8 @@ test('#isOk, #isNotOk', function() {
     // Choose the minimum range (3rd parameter) to make the test always pass
     // it should be less than 1
     test('#approximately', function() {
-      assert.approximately(weirdNumbers(0.5) , 1, /*edit this*/ 0 );
-      assert.approximately(weirdNumbers(0.2) , 1, /*edit this*/ 0 );
+      assert.approximately(weirdNumbers(0.5) , 1,  0.5 );
+      assert.approximately(weirdNumbers(0.2) , 1,  0.8 );
     });
   });
 
@@ -126,19 +126,25 @@ test('#isOk, #isNotOk', function() {
   var backendLanguages = ['php', 'python', 'javascript', 'ruby', 'asp'];
   suite('Arrays', function(){
     
-    /** 11 - #isArray vs #isNotArray **/
-    test('#isArray, #isNotArray', function() {
-      assert.fail('isThisAnArray?'.split(''), 'String.prototype.split() returns an Array');
-      assert.fail([1,2,3].indexOf(2), 'indexOf returns a number.');
+     /** 11 - #isArray vs #isNotArray **/
+    test("#isArray, #isNotArray", function() {
+      assert.isArray(
+        "isThisAnArray?".split(""),
+        "String.prototype.split() returns an Array"
+      );
+      assert.isNotArray([1, 2, 3].indexOf(2), "indexOf returns a number.");
     });
     
     /** 12 - #include vs #notInclude **/
-    test('Array #include, #notInclude', function() {
-      assert.fail(winterMonths, 'jul', "It's summer in july...");
-      assert.fail(backendLanguages, 'javascript', 'JS is a backend language !!');
+    test("Array #include, #notInclude", function() {
+      assert.notInclude(winterMonths, "jul", "It's summer in july...");
+      assert.include(
+        backendLanguages,
+        "javascript",
+        "JS is a backend language !!"
+      );
     });
   });
-
 // -----------------------------------------------------------------------------
 
   // These variables are used in the tests. Don't Edit them.
@@ -147,11 +153,11 @@ test('#isOk, #isNotOk', function() {
   };
   suite('Strings', function(){
     
-    /** 13 - #isString asserts that the actual value is a string. **/
-    test('#isString, #isNotString', function() {
-      assert.fail(Math.sin(Math.PI/4), 'a float is not a string');
-      assert.fail(process.env.PATH, 'env vars are strings (or undefined)');
-      assert.fail(JSON.stringify({type: 'object'}), 'a JSON is a string');
+   /** 13 - #isString asserts that the actual value is a string. **/
+    test("#isString, #isNotString", function() {
+      assert.isNotString(Math.sin(Math.PI / 4), "a float is not a string");
+      assert.isString(process.env.PATH, "env vars are strings (or undefined)");
+      assert.isString(JSON.stringify({ type: "object" }), "a JSON is a string");
     });
     
     /** 14 - #include (on #notInclude ) works for strings too !! **/
