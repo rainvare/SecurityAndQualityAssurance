@@ -6,6 +6,7 @@ const session = require('express-session');
 const passport = require('passport');
 const ObjectID = require("mongodb").ObjectID;
 const mongo = require("mongodb").MongoClient;
+const LocalStrategy = require('passport-local');
 
 const app = express();
 
@@ -16,12 +17,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine', 'pug');
 
-app.route("/").get((req, res) => {
-  //Change the response to render the Pug template
-  //res.send(`Pug template is not defined.`);
-  // res.render('pug/index'); 
-  res.render(process.cwd() + '/views/pug/index', {title: 'Hello', message: 'Please login'});
-});
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -47,6 +42,42 @@ mongo.connect(process.env.DATABASE, (err, db) => {
       });
     });
   }
+  
+  passport.use(new LocalStrategy(
+  function(username, password, done) {
+    db.collection('users').findOne({ username: username }, function (err, user) {
+      console.log('User '+ username +' attempted to log in.');
+      if (err) { return done(err); }
+      if (!user) { return done(null, false); }
+      if (password !== user.password) { return done(null, false); }
+      return done(null, user);
+    });
+  }
+));
+  
+  app.route("/").get((req, res) => {
+        res.render(process.cwd() + "/views/pug/index", {
+          title: "Hello",
+          message: "Please login",
+          showLogin: true,
+        });
+      });
+
+      app
+        .route("/login")
+        .post(
+          passport.authenticate("local", { failureRedirect: "/" }),
+          (req, res) => {
+            res.redirect("/profile");
+          }
+        );
+  
+app.route("/").get((req, res) => {
+  //Change the response to render the Pug template
+  //res.send(`Pug template is not defined.`);
+  // res.render('pug/index'); 
+  res.render(process.cwd() + '/views/pug/index', {title: 'Hello', message: 'Please login'});
+});
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
