@@ -99,7 +99,16 @@ mongo.connect(process.env.DATABASE, (err, db) => {
         });
       });
 
-
+//llamar logout route to home page
+app.route("/logout").get((req, res) => {
+        req.logout();
+        res.redirect("/");
+      });
+  
+//404 
+ app.use((req, res, next) => {
+        res.status(404).type("text").send("Not Found");
+      }); 
 
   
   //listen port
