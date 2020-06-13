@@ -15,9 +15,10 @@ app.use("/public", express.static(process.cwd() + "/public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//uso de pug template
 app.set('view engine', 'pug');
 
-
+//passport session
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: true,
@@ -26,12 +27,15 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+//Database conect
+
 mongo.connect(process.env.DATABASE, (err, db) => {
   if (err) {
     console.log("Database error: " + err);
   } else {
     console.log("Successful database connection");
-
+    
+//serializacion  deserialización 
     passport.serializeUser((user, done) => {
       done(null, user._id);
     });
@@ -55,14 +59,30 @@ mongo.connect(process.env.DATABASE, (err, db) => {
   }
 ));
   
+//autenticar login 
+  function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect("/");
+};
+//middleware autenticado e implementado en profile
+ app
+ .route('/profile')
+ .get(ensureAuthenticated, (req,res) => {
+    res.render(process.cwd() + '/views/pug/profile');
+ });  
+   //llamar pug template y renderizar
+  //formulario de login
   app.route("/").get((req, res) => {
         res.render(process.cwd() + "/views/pug/index", {
-          title: "Hello",
+          title: 'Home Page ',
           message: "Please login",
           showLogin: true,
         });
       });
 
+  //local passport autenticar
       app
         .route("/login")
         .post(
@@ -71,27 +91,18 @@ mongo.connect(process.env.DATABASE, (err, db) => {
             res.redirect("/profile");
           }
         );
-  
-app.route("/").get((req, res) => {
-  //Change the response to render the Pug template
-  //res.send(`Pug template is not defined.`);
-  // res.render('pug/index'); 
-  res.render(process.cwd() + '/views/pug/index', {title: 'Hello', message: 'Please login'});
-});
+ 
+  //render profile
+  app.route("/profile").get(ensureAuthenticated, (req, res) => {
+        res.render(process.cwd() + "/views/pug/profile", {
+          username: req.user.username,
+        });
+      });
+
+
 
   
-  function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/');
-};
-  
- app
- .route('/profile')
- .get(ensureAuthenticated, (req,res) => {
-    res.render(process.cwd() + '/views/pug/profile');
- });
+  //listen port
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
