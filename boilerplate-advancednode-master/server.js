@@ -37,12 +37,44 @@ app.use(passport.session());
 mongo.connect(process.env.DATABASE, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  },(err, db) => {
+  },(err, client) => {
+  let db = client.db("FCC");
   if (err) { 
     console.log('Database error: ' + err);
   } else { 
     console.log("Successful database connection");
-
+     
+  //registro de usuario 
+    app.route('/register')
+  .post((req, res, next) => {
+    db.collection('users').findOne({ username: req.body.username }, function(err, user) {
+      if (err) {
+        next(err);
+      } else if (user) { 
+        res.redirect('/');
+      } else {
+        db.collection('users').insertOne({
+          username: req.body.username,
+          password: req.body.password
+        },
+          (err, doc) => {
+            if (err) {
+              res.redirect('/');
+            } else {
+              next(null, user);
+            }
+          }
+        )
+      }
+    })
+  },
+        
+    passport.authenticate('local', { failureRedirect: '/' }),
+    (req, res, next) => {
+      res.redirect('/profile');
+    }
+  );
+  
     //uso de passport para autenticar user DB al hacer login
     passport.use(
       new LocalStrategy((username, password, done) => {
@@ -118,35 +150,6 @@ app
     res.redirect('/');
 });
       
-    //registro de usuario
-    app.route('/register')
-  .post((req, res, next) => {
-    db.collection('users').findOne({ username: req.body.username }, function(err, user) {
-      if (err) {
-        next(err);
-      } else if (user) { 
-        res.redirect('/');
-      } else {
-        db.collection('users').insertOne({
-          username: req.body.username,
-          password: req.body.password
-        },
-          (err, doc) => {
-            if (err) {
-              res.redirect('/');
-            } else {
-              next(null, user);
-            }
-          }
-        )
-      }
-    })
-  },
-    passport.authenticate('local', { failureRedirect: '/' }),
-    (req, res, next) => {
-      res.redirect('/profile');
-    }
-  );
   
    
     //página faltante - error 404
