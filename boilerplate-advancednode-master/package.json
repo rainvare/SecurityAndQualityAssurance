@@ -3,26 +3,29 @@
   "//2": "https://docs.npmjs.com/files/package.json",
   "//3": "updating this file will download and update your packages",
   "name": "fcc-advanced-node-and-express",
-  "author": "http://github.com/JosephLivengood",
+  "author": "http://github.com/rainvare",
   "version": "0.0.1",
-  "description": "What am I about?",
+  "description": "FCC project - Node and Express Advance",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.16.1",
+    "express": "^4.17.1",
     "cors": "^2.8.1",
     "pug": "^3.0.0",
-    "passport": "^0.4.1",
-    "express-session": "^1.15.0"
+    "passport": "^0.3.2",
+    "express-session": "^1.15.0",
+    "body-parser": "^1.19.0",
+    "mongodb": "^3.5.9",
+    "passport-local": "^1.0.0"
   },
   "engines": {
     "node": "^12.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://glitch.com/#!/project/welcome-project"
+    "url": "https://puddle-shimmer-crowley.glitch.me"
   },
   "keywords": [
     "node",
