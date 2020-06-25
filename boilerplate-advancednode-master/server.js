@@ -1,165 +1,203 @@
 "use strict";
+const auth = require('./auth.js');
+const routes = require('./routes.js');
 
-//variables
 const express = require("express");
+const bodyParser = require("body-parser");
 const fccTesting = require("./freeCodeCamp/fcctesting.js");
-const session = require("express-session");
-const passport = require("passport");
-const ObjectID = require("mongodb").ObjectID;
 const mongo = require("mongodb").MongoClient;
-const LocalStrategy = require('passport-local');
+const passport = require("passport");
+const session = require("express-session");
+const ObjectID = require("mongodb").ObjectID;
+const LocalStrategy = require("passport-local");
+
+const bcrypt = require("bcrypt");
+let comparePassword;
+let newHash;
+switch (process.env.HASHING) {
+  case "sync":
+    comparePassword = (password, hash, cb) => {
+      cb(null, bcrypt.compareSync(password, hash));
+    };
+    newHash = (password, saltRounds, cb) => {
+      cb(null, bcrypt.hashSync(password, saltRounds));
+    };
+    break;
+
+  case "async":
+    comparePassword = (password, hash, cb) => {
+      bcrypt.compare(password, hash, cb);
+    };
+    newHash = (password, saltRounds, cb) => {
+      bcrypt.hash(password, saltRounds, cb);
+    };
+    break;
+
+  default:
+    comparePassword = (password, hash, cb) => {
+      cb(null, password != hash);
+    };
+    newHash = (password, saltRounds, cb) => {
+      cb(null, password);
+    };
+    break;
+}
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  res.redirect("/");
+}
 
 const app = express();
-
-//For FCC testing purposes
-fccTesting(app);
-app.use("/public", express.static(process.cwd() + "/public"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-//set pug template
 app.set("view engine", "pug");
 
-//passport middleware
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true
-  })
-);
-//iniciar passport
-app.use(passport.initialize());
-app.use(passport.session());
+fccTesting(app); //For FCC testing purposes
+app.use("/public", express.static(process.cwd() + "/public"));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-//BASE DE DATOS MONGO
+if (process.env.ENABLE_DEBUGGING == "true") {
+  let count = 0;
+  app.use((req, res, next) => {
+    count++;
+    let str = count + " " + req.method + " " + req.url;
+    console.log("\nNew request:\n" + str);
+    console.log(req.body);
+    res.on("finish", () => console.log("\nRequest ended:\n" + str));
+    next();
+  });
+}
 
-mongo.connect(process.env.DATABASE, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  },(err, client) => {
-  let db = client.db("FCC");
-  if (err) { 
-    console.log('Database error: ' + err);
-  } else { 
-    console.log("Successful database connection");
-     
-  //registro de usuario 
-    app.route('/register')
-  .post((req, res, next) => {
-    db.collection('users').findOne({ username: req.body.username }, function(err, user) {
-      if (err) {
-        next(err);
-      } else if (user) { 
-        res.redirect('/');
-      } else {
-        db.collection('users').insertOne({
-          username: req.body.username,
-          password: req.body.password
-        },
-          (err, doc) => {
-            if (err) {
-              res.redirect('/');
-            } else {
-              next(null, user);
-            }
-          }
-        )
-      }
-    })
-  },
-        
-    passport.authenticate('local', { failureRedirect: '/' }),
-    (req, res, next) => {
-      res.redirect('/profile');
+// Enable to pass the challenge called "Advanced Node and Express -
+// Registration of New Users"
+if (process.env.ENABLE_DELAYS)
+  app.use((req, res, next) => {
+    switch (req.method) {
+      case "GET":
+        switch (req.url) {
+          case "/logout":
+            return setTimeout(() => next(), 500);
+          case "/profile":
+            return setTimeout(() => next(), 700);
+          default:
+            next();
+        }
+        break;
+      case "POST":
+        switch (req.url) {
+          case "/login":
+            return setTimeout(() => next(), 900);
+          default:
+            next();
+        }
+        break;
+      default:
+        next();
     }
-  );
-  
-    //uso de passport para autenticar user DB al hacer login
+  });
+
+mongo.connect(process.env.DATABASE, (err, connection) => {
+  if (err) console.log("Database error: " + err);
+  else {
+    console.log("Successful database connection");
+    const db = connection.db();
+
+    app.use(
+      session({
+        secret: process.env.SESSION_SECRET,
+        resave: true,
+        saveUninitialized: true
+      })
+    );
+    app.use(passport.initialize());
+    app.use(passport.session());
+    passport.serializeUser((user, done) => done(null, user._id));
+
+    passport.deserializeUser((id, done) => {
+      db.collection("users").findOne({ _id: new ObjectID(id) }, (err, doc) =>
+        done(null, doc)
+      );
+    });
+
     passport.use(
       new LocalStrategy((username, password, done) => {
         db.collection("users").findOne({ username: username }, (err, user) => {
-          console.log("User " + username + " attempted to log in.");
-          if (err) return done(err);
-          if (!user) return done(null, false);
-          if (password !== user.password) return done(null, false);
-
-          return done(null, user);
+          if (err) done(err);
+          else if (!user) done(null, false);
+          else
+            comparePassword(password, user.password, (err, match) => {
+              if (err) done(err);
+              else if (match) done(null, false);
+              else done(null, user);
+            });
         });
       })
     );
-   
-    
-    //serialization and app.listen van dentro de mongodb
-    //serializar y deserializar
-    passport.serializeUser((user, done) => {
-      done(user._id);
-    });
 
-    passport.deserializeUser((id, done) => {
-      db.collection('users').findOne(
-       {_id: new ObjectID(id)},
-         (err, doc) => {
-            done( doc);
-         }
-       );
-    });
-    
-
-    //pug template
-    app.route("/").get((req, res) => {
-      res.render(process.cwd() + "/views/pug/index", {
+    app.route("/").get((req, res) =>
+      res.render(process.cwd() + "/views/pug/index.pug", {
         title: "Hello",
         message: "Please login",
-        //formulario de inicio de sesión
         showLogin: true,
-        //formulario de registro
         showRegistration: true
-      });
-    });
-    
-   // funcion middleware para verificacion de login de user
-    function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/');
-}; 
-    
-    //ruta de inicio de sesión - profile home
-app
-        .route("/login")
-        .post(
-          passport.authenticate("local", { failureRedirect: "/" }),
-          (req, res) => {
-            res.redirect("/profile");
-          }
-        );
+      })
+    );
 
-    //middleware dirige a profile
-      app.route("/profile").get(ensureAuthenticated, (req, res) => {
+    app
+      .route("/login")
+      .post(
+        passport.authenticate("local", { failureRedirect: "/" }),
+        (req, res) => res.redirect("/profile")
+      );
+
+    app
+      .route("/profile")
+      .get(ensureAuthenticated, (req, res) =>
         res.render(process.cwd() + "/views/pug/profile", {
-          username: req.user.username,
-        });
-      });
-    
-    //logout 
-    app.route('/logout')
-  .get((req, res) => {
-    req.logout();
-    res.redirect('/');
-});
-      
-  
-   
-    //página faltante - error 404
-    app.use((req, res, next) => {
-  res.status(404)
-    .type('text')
-    .send('Not Found');
-});
+          username: req.user.username
+        })
+      );
 
-    //listen PORT
+    app.route("/logout").get((req, res) => {
+      req.logout();
+      res.redirect("/");
+    });
+
+    app.route("/register").post(
+      (req, res, next) =>
+        db
+          .collection("users")
+          .findOne({ username: req.body.username }, (err, user) => {
+            if (err) next(err);
+            else if (user) res.redirect("/");
+            else
+              newHash(req.body.password, 12, (err, hash) => {
+                if (err) next(err);
+                else
+                  db.collection("users").insertOne(
+                    {
+                      username: req.body.username,
+                      password: hash
+                    },
+                    (err, user) => {
+                      if (err) res.redirect("/");
+                      else next();
+                    }
+                  );
+              });
+          }),
+      passport.authenticate("local", {
+        successRedirect: "/profile",
+        failureRedirect: "/"
+      })
+    );
+
+    app.use((req, res, next) => {
+      res
+        .status(404)
+        .type("text")
+        .send("Not Found");
+    });
 
     app.listen(process.env.PORT || 3000, () => {
       console.log("Listening on port " + process.env.PORT);
