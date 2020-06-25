@@ -8,9 +8,10 @@ const mongo = require("mongodb").MongoClient;
 const passport = require("passport");
 const GitHubStrategy = require("passport-github").Strategy;
 const http = require("http").Server(app);
-const io = require("socket.io")(http); //challenge 16
+
 const cors = require("cors");
 app.use(cors());
+ 
 
 fccTesting(app); //For FCC testing purposes
 
@@ -131,4 +132,10 @@ mongo.connect(process.env.DATABASE, (err, db) => {
       console.log("Listening on port " + process.env.PORT);
     });
   }
+  
+  /* env : SESSION_SECRET="12"
+GITHUB_CLIENT_ID=passed
+GITHUB_CLIENT_SECRET=passed*/
+  
 });
+
