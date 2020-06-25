@@ -56,7 +56,15 @@ mongo.connect(process.env.DATABASE, (err, db) => {
         *  ADD YOUR CODE BELOW
         */
       
-      
+       app.route( '/auth/github' ) //challenge 14: Implementation of Social Authentication
+          .get( passport.authenticate( 'github' , { failureRedirect: '/' } ), ( req,res ) => {
+            res.redirect( '/profile' );
+          });    
+
+        app.route( '/auth/github/callback' ) //challenge 14: Implementation of Social Authentication
+          .get( passport.authenticate( 'github', { failureRedirect: '/' } ), ( req,res ) => {
+            res.redirect( '/profile' );
+          });   
       
       
       
