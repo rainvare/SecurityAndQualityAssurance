@@ -1,4 +1,4 @@
-onst session     = require('express-session');
+const session     = require('express-session');
 const mongo       = require('mongodb').MongoClient;
 const passport    = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
