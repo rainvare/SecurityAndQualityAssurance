@@ -24,7 +24,7 @@ module.exports = function (app, db) {
     passport.use(new GitHubStrategy({
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: "https://uneven-heady-ornament.glitch.me/auth/github/callback"
+        callbackURL: "https://deep-near-shirt.glitch.me/auth/github/callback"
       },
       function(accessToken, refreshToken, profile, cb) {
           db.collection('chatusers').findAndModify(
@@ -32,9 +32,9 @@ module.exports = function (app, db) {
               {},
               {$setOnInsert:{
                   id: profile.id,
-                  name: profile.displayName || 'Anonymous',
+                  name: profile.displayName || 'John Doe',
                   photo: profile.photos[0].value || '',
-                  email: profile.emails[0].value || 'No public email',
+                  email: profile.email[0]||'No public email',
                   created_on: new Date(),
                   provider: profile.provider || '',
                   chat_messages: 0
