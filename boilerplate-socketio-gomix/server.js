@@ -8,13 +8,13 @@ const auth        = require('./app/auth.js');
 const routes      = require('./app/routes.js');
 const mongo       = require('mongodb').MongoClient;
 const passport    = require('passport');
-const passportSocketIo = require('passport.socketio'); //challenge 20: Authentication with Socket.IO
-const cookieParser= require('cookie-parser');
+const cookieParser= require('cookie-parser')
 const app         = express();
 const http        = require('http').Server(app);
 const sessionStore= new session.MemoryStore();
 const io          = require('socket.io')(http); //challenge 17: Set up the Environment
 const cors        = require('cors');
+const passportSocketIo =require('passport.socketio') ; //challenge 20 users with passport socket io
 app.use(cors()); 
 
 fccTesting(app); //For FCC testing purposes
@@ -25,70 +25,58 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'pug')
 
-function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io');
-  accept(null, true);
-  accept();
-}
- 
-function onAuthorizeFail(data, message, error, accept){
-  if(error)
-    throw new Error(message);
-  console.log('failed connection to socket.io:', message);
-  accept(null, false);
-}
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true,
+  key: 'express.sid',
+  store: sessionStore,
+}));
 
-//challenge 20: Authentication with Socket.IO
-io.use(passportSocketIo.authorize({
+
+mongo.connect(process.env.DATABASE, (err, db) => {
+    if(err) console.log('Database error: ' + err);
+ auth(app, db);
+routes(app, db);
+      
+        app.listen(process.env.PORT || 3000, () => {
+          console.log("Listening on port " + process.env.PORT);
+        });  
+
+  //challenge 20: Authentication with Socket.IO (antes del socket)
+  io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
   key:          'express.sid',
   secret:       process.env.SESSION_SECRET,
   store:        sessionStore
 }));
- 
-mongo.connect(process.env.DATABASE, (err, client) => {
-    if(err) console.log('Database error: ' + err);
-    
-    app.use(session({
-      secret:       process.env.SESSION_SECRET,
-      resave:       true, 
-      saveUninitialized: true,
-      key:               'express.sid',
-      store:              sessionStore,
-      success:            onAuthorizeSuccess,
-      fail:               onAuthorizeFail,
-    })); 
   
-    let db = client.db('FCC');
-    auth(app, db);
-    routes(app, db); 
-  
-    http.listen(process.env.PORT || 3000);
- 
     //start socket.io code  
-    let currentUsers = 0; //challengs 18: Communicate by Emitting
-    io.on('connection', socket => {
-      
-      console.log("User"+socket.request.user.name +"has connected"); 
-      
-      //challengs 18: Communicate by Emitting, challenge 21: Announce New Users
-      ++currentUsers;
-      console.log('current users: ' +currentUsers);
-      io.emit('user', {name: socket.request.user.name, currentUsers, connected: true});
-     
-      socket.on('chat message', message => {
+  var currentUsers = 0; //challenge 18
+  
+io.on('connection', socket => {//challenge 17
+  console.log("User"+socket.request.user.name +"has connected");
+  
+  ++currentUsers; //challenge 18 conteo de usuarios(tambien en client)
+  io.emit('user', {name: socket.request.user.name, currentUsers, connected: true});
+
+  //challenge 22 chat
+  socket.on('chat message', message => {
         console.log('New message ' +message);
         io.emit('chat message', {name: socket.request.user.name, message});
       })
-      
-      //challenge 19: Handle a Disconnect
-      socket.on('disconnect', () => { 
-        console.log('user ' +socket.request.user.name + ' has disconnected' );
+  
+  
+  
+  //challenge 19: Disconnect
+socket.on('disconnect', () => { 
         --currentUsers;
         console.log('current users: ' +currentUsers);
+        console.log('user ' +socket.request.user.name + ' has disconnected' );
         io.emit('user', {name: socket.request.user.name, currentUsers, connected: false});
       }); 
-    });
-    //end socket.io code
-}); 
-
+});
+    //end socket.io code 
+  
+  
+});
